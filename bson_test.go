@@ -15,7 +15,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // © 2020 GitHub, Inc.
 
-package main
+package godynstruct
 
 import (
 	"reflect"
