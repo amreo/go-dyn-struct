@@ -34,10 +34,26 @@ func (p *Person) UnmarshalJSON(data []byte) error {
 	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo)
 }
 
+func (p FavoriteOperatingSystem) MarshalJSON() ([]byte, error) {
+	return DynMarshalJSON(reflect.ValueOf(p), p._otherInfo, "_otherInfo")
+}
+
+func (p *FavoriteOperatingSystem) UnmarshalJSON(data []byte) error {
+	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo)
+}
+
 func TestDynMarshalJSON(t *testing.T) {
 	p := Person{
-		Name: "amreo",
-		Age:  99,
+		Name:          "amreo",
+		Age:           99,
+		AltNames:      []string{"bar", "foo"},
+		Certification: nil,
+		FavoriteOperatingSystems: []FavoriteOperatingSystem{
+			{
+				OS:    "Archlinux",
+				Since: 2015,
+			},
+		},
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,
@@ -48,6 +64,14 @@ func TestDynMarshalJSON(t *testing.T) {
 		{
 			"Name": "amreo",
 			"Age": 99,
+			"AltNames": [ "bar", "foo" ],
+			"Certification": null,
+			"FavoriteOperatingSystems": [
+				{
+					"OS": "Archlinux",
+					"Since": 2015
+				}
+			],
 			"Profession": "Gamer",
 			"Really": true
 		}
@@ -61,8 +85,17 @@ func TestDynMarshalJSON(t *testing.T) {
 
 func TestDynUnmarshalJSON(t *testing.T) {
 	expected := Person{
-		Name: "amreo",
-		Age:  99,
+		Name:          "amreo",
+		Age:           99,
+		AltNames:      []string{"bar", "foo"},
+		Certification: nil,
+		FavoriteOperatingSystems: []FavoriteOperatingSystem{
+			{
+				OS:         "Archlinux",
+				Since:      2015,
+				_otherInfo: map[string]interface{}{},
+			},
+		},
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,
@@ -73,6 +106,14 @@ func TestDynUnmarshalJSON(t *testing.T) {
 		{
 			"Name": "amreo",
 			"Age": 99,
+			"AltNames": [ "bar", "foo" ],
+			"Certification": null,
+			"FavoriteOperatingSystems": [
+				{
+					"OS": "Archlinux",
+					"Since": 2015
+				}
+			],
 			"Profession": "Gamer",
 			"Really": true
 		}

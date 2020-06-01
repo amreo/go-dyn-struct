@@ -34,10 +34,26 @@ func (p *Person) UnmarshalBSON(data []byte) error {
 	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo)
 }
 
+func (p FavoriteOperatingSystem) MarshalBSON() ([]byte, error) {
+	return DynMarshalBSON(reflect.ValueOf(p), p._otherInfo, "_otherInfo")
+}
+
+func (p *FavoriteOperatingSystem) UnmarshalBSON(data []byte) error {
+	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo)
+}
+
 func TestDynMarshalBSON(t *testing.T) {
 	p1 := Person{
-		Name: "amreo",
-		Age:  99,
+		Name:          "amreo",
+		Age:           99,
+		AltNames:      []string{"bar", "foo"},
+		Certification: nil,
+		FavoriteOperatingSystems: []FavoriteOperatingSystem{
+			{
+				OS:    "Archlinux",
+				Since: 2015,
+			},
+		},
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,
@@ -47,6 +63,17 @@ func TestDynMarshalBSON(t *testing.T) {
 	p2 := bson.D{
 		bson.E{Key: "Name", Value: "amreo"},
 		bson.E{Key: "Age", Value: 99},
+		bson.E{Key: "AltNames", Value: bson.A{
+			"bar",
+			"foo",
+		}},
+		bson.E{Key: "Certification", Value: nil},
+		bson.E{Key: "FavoriteOperatingSystems", Value: bson.A{
+			bson.D{
+				bson.E{Key: "OS", Value: "Archlinux"},
+				bson.E{Key: "Since", Value: 2015},
+			},
+		}},
 		bson.E{Key: "Profession", Value: "Gamer"},
 		bson.E{Key: "Really", Value: true},
 	}
@@ -64,13 +91,33 @@ func TestDynUnmarshalBSON(t *testing.T) {
 	p := bson.D{
 		bson.E{Key: "Name", Value: "amreo"},
 		bson.E{Key: "Age", Value: 99},
+		bson.E{Key: "AltNames", Value: bson.A{
+			"bar",
+			"foo",
+		}},
+		bson.E{Key: "Certification", Value: nil},
+		bson.E{Key: "FavoriteOperatingSystems", Value: bson.A{
+			bson.D{
+				bson.E{Key: "OS", Value: "Archlinux"},
+				bson.E{Key: "Since", Value: 2015},
+			},
+		}},
 		bson.E{Key: "Profession", Value: "Gamer"},
 		bson.E{Key: "Really", Value: true},
 	}
 
 	expected := Person{
-		Name: "amreo",
-		Age:  99,
+		Name:          "amreo",
+		Age:           99,
+		AltNames:      []string{"bar", "foo"},
+		Certification: nil,
+		FavoriteOperatingSystems: []FavoriteOperatingSystem{
+			{
+				OS:         "Archlinux",
+				Since:      2015,
+				_otherInfo: map[string]interface{}{},
+			},
+		},
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,

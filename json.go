@@ -60,7 +60,7 @@ func DynUnmarshalJSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 	*extraFieldsPtr = make(map[string]interface{})
 
 	// get the list of key/value pairs of the map
-	var objmap map[string]*json.RawMessage
+	var objmap map[string]json.RawMessage
 	err := json.Unmarshal(data, &objmap)
 	if err != nil {
 		return err
@@ -72,14 +72,14 @@ func DynUnmarshalJSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 
 		if field.IsValid() {
 			// the field k is part of the struct, so the value will be set inside
-			err = json.Unmarshal(*objmap[k], field.Addr().Interface())
+			err = json.Unmarshal(objmap[k], field.Addr().Interface())
 			if err != nil {
 				return err
 			}
 		} else {
 			// the field k is not part of the struct, so the kv will be added to extraFields
 			var out interface{}
-			err = json.Unmarshal(*v, &out)
+			err = json.Unmarshal(v, &out)
 			if err != nil {
 				return err
 			}

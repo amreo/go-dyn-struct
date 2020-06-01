@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // DynMarshalBSON return the BSON encoding of the dynamic struct _struct
@@ -67,7 +68,7 @@ func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 		return err
 	}
 
-	var othersList bson.D
+	var othersList bson.D = []primitive.E{}
 
 	// for each key/value pair set it to a field of struct or add it to othersList
 	for k, v := range document {

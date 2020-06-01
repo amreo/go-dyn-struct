@@ -18,8 +18,17 @@
 package godynstruct
 
 type Person struct {
-	Name string
-	Age  int
+	Name                     string
+	Age                      int
+	AltNames                 []string
+	Certification            []string
+	FavoriteOperatingSystems []FavoriteOperatingSystem
+	_otherInfo               map[string]interface{}
+}
+
+type FavoriteOperatingSystem struct {
+	OS    string
+	Since int
 
 	_otherInfo map[string]interface{}
 }
