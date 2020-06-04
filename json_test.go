@@ -54,6 +54,8 @@ func TestDynMarshalJSON(t *testing.T) {
 				Since: 2015,
 			},
 		},
+		OptionalMainOperatingSystem: nil,
+		OptionalTitle:               nil,
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,
@@ -72,6 +74,8 @@ func TestDynMarshalJSON(t *testing.T) {
 					"Since": 2015
 				}
 			],
+			"OptionalMainOperatingSystem": null,
+			"OptionalTitle": null,
 			"Profession": "Gamer",
 			"Really": true
 		}
@@ -96,6 +100,8 @@ func TestDynUnmarshalJSON(t *testing.T) {
 				_otherInfo: map[string]interface{}{},
 			},
 		},
+		OptionalMainOperatingSystem: nil,
+		OptionalTitle:               nil,
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,
@@ -114,6 +120,8 @@ func TestDynUnmarshalJSON(t *testing.T) {
 					"Since": 2015
 				}
 			],
+			"OptionalMainOperatingSystem": null,
+			"OptionalTitle": null,
 			"Profession": "Gamer",
 			"Really": true
 		}

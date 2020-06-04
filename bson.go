@@ -76,9 +76,14 @@ func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 
 		if field.IsValid() {
 			// the field k is part of the struct, so the value will be set inside
-			err = v.Unmarshal(field.Addr().Interface())
-			if err != nil {
-				return err
+			if v.Type == bson.TypeNull && field.Type().Kind() == reflect.Ptr && field.Type().Elem().Kind() == reflect.Struct {
+				nilValue := reflect.Zero(field.Type())
+				field.Set(nilValue)
+			} else {
+				err = v.Unmarshal(field.Addr().Interface())
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			// the field k is not part of the struct, so the kv is added to othersList

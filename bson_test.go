@@ -54,6 +54,8 @@ func TestDynMarshalBSON(t *testing.T) {
 				Since: 2015,
 			},
 		},
+		// OptionalMainOperatingSystem: nil,
+		OptionalTitle: nil,
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,
@@ -74,6 +76,8 @@ func TestDynMarshalBSON(t *testing.T) {
 				bson.E{Key: "Since", Value: 2015},
 			},
 		}},
+		bson.E{Key: "OptionalMainOperatingSystem", Value: nil},
+		bson.E{Key: "OptionalTitle", Value: nil},
 		bson.E{Key: "Profession", Value: "Gamer"},
 		bson.E{Key: "Really", Value: true},
 	}
@@ -102,6 +106,8 @@ func TestDynUnmarshalBSON(t *testing.T) {
 				bson.E{Key: "Since", Value: 2015},
 			},
 		}},
+		bson.E{Key: "OptionalMainOperatingSystem", Value: nil},
+		bson.E{Key: "OptionalTitle", Value: nil},
 		bson.E{Key: "Profession", Value: "Gamer"},
 		bson.E{Key: "Really", Value: true},
 	}
@@ -118,6 +124,8 @@ func TestDynUnmarshalBSON(t *testing.T) {
 				_otherInfo: map[string]interface{}{},
 			},
 		},
+		OptionalMainOperatingSystem: nil,
+		OptionalTitle:               nil,
 		_otherInfo: map[string]interface{}{
 			"Profession": "Gamer",
 			"Really":     true,

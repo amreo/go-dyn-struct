@@ -18,12 +18,14 @@
 package godynstruct
 
 type Person struct {
-	Name                     string
-	Age                      int
-	AltNames                 []string
-	Certification            []string
-	FavoriteOperatingSystems []FavoriteOperatingSystem
-	_otherInfo               map[string]interface{}
+	Name                        string
+	Age                         int
+	AltNames                    []string
+	Certification               []string
+	FavoriteOperatingSystems    []FavoriteOperatingSystem
+	OptionalMainOperatingSystem *FavoriteOperatingSystem
+	OptionalTitle               *string
+	_otherInfo                  map[string]interface{}
 }
 
 type FavoriteOperatingSystem struct {
