@@ -31,7 +31,7 @@ func (p Person) MarshalBSON() ([]byte, error) {
 }
 
 func (p *Person) UnmarshalBSON(data []byte) error {
-	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo)
+	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
 }
 
 func (p FavoriteOperatingSystem) MarshalBSON() ([]byte, error) {
@@ -39,11 +39,12 @@ func (p FavoriteOperatingSystem) MarshalBSON() ([]byte, error) {
 }
 
 func (p *FavoriteOperatingSystem) UnmarshalBSON(data []byte) error {
-	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo)
+	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
 }
 
 func TestDynMarshalBSON(t *testing.T) {
 	p1 := Person{
+		ID:            "foobar",
 		Name:          "amreo",
 		Age:           99,
 		AltNames:      []string{"bar", "foo"},
@@ -63,6 +64,7 @@ func TestDynMarshalBSON(t *testing.T) {
 	}
 
 	p2 := bson.D{
+		bson.E{Key: "FooID", Value: "foobar"},
 		bson.E{Key: "Name", Value: "amreo"},
 		bson.E{Key: "Age", Value: 99},
 		bson.E{Key: "AltNames", Value: bson.A{
@@ -93,6 +95,7 @@ func TestDynMarshalBSON(t *testing.T) {
 
 func TestDynUnmarshalBSON(t *testing.T) {
 	p := bson.D{
+		bson.E{Key: "FooID", Value: "foobar"},
 		bson.E{Key: "Name", Value: "amreo"},
 		bson.E{Key: "Age", Value: 99},
 		bson.E{Key: "AltNames", Value: bson.A{
@@ -113,6 +116,7 @@ func TestDynUnmarshalBSON(t *testing.T) {
 	}
 
 	expected := Person{
+		ID:            "foobar",
 		Name:          "amreo",
 		Age:           99,
 		AltNames:      []string{"bar", "foo"},

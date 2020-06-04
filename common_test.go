@@ -18,6 +18,7 @@
 package godynstruct
 
 type Person struct {
+	ID                          string `bson:"FooID" json:"BarID"`
 	Name                        string
 	Age                         int
 	AltNames                    []string

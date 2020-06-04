@@ -31,7 +31,7 @@ func (p Person) MarshalJSON() ([]byte, error) {
 }
 
 func (p *Person) UnmarshalJSON(data []byte) error {
-	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo)
+	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
 }
 
 func (p FavoriteOperatingSystem) MarshalJSON() ([]byte, error) {
@@ -39,11 +39,12 @@ func (p FavoriteOperatingSystem) MarshalJSON() ([]byte, error) {
 }
 
 func (p *FavoriteOperatingSystem) UnmarshalJSON(data []byte) error {
-	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo)
+	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
 }
 
 func TestDynMarshalJSON(t *testing.T) {
 	p := Person{
+		ID:            "foobar",
 		Name:          "amreo",
 		Age:           99,
 		AltNames:      []string{"bar", "foo"},
@@ -64,6 +65,7 @@ func TestDynMarshalJSON(t *testing.T) {
 
 	expected := `
 		{
+			"BarID": "foobar",
 			"Name": "amreo",
 			"Age": 99,
 			"AltNames": [ "bar", "foo" ],
@@ -89,6 +91,7 @@ func TestDynMarshalJSON(t *testing.T) {
 
 func TestDynUnmarshalJSON(t *testing.T) {
 	expected := Person{
+		ID:            "foobar",
 		Name:          "amreo",
 		Age:           99,
 		AltNames:      []string{"bar", "foo"},
@@ -110,6 +113,7 @@ func TestDynUnmarshalJSON(t *testing.T) {
 
 	p := `
 		{
+			"BarID": "foobar",
 			"Name": "amreo",
 			"Age": 99,
 			"AltNames": [ "bar", "foo" ],

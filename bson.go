@@ -40,8 +40,14 @@ func DynMarshalBSON(_struct reflect.Value, extraFields map[string]interface{}, e
 	typ := _struct.Type()
 	for i := 0; i < _struct.NumField(); i++ {
 		fi := typ.Field(i)
+
 		if fi.Name != extraFieldsName {
-			out = append(out, bson.E{Key: fi.Name, Value: _struct.Field(i).Interface()})
+			val, ok := fi.Tag.Lookup("bson")
+			if ok {
+				out = append(out, bson.E{Key: val, Value: _struct.Field(i).Interface()})
+			} else {
+				out = append(out, bson.E{Key: fi.Name, Value: _struct.Field(i).Interface()})
+			}
 		}
 	}
 
@@ -57,7 +63,7 @@ func DynMarshalBSON(_struct reflect.Value, extraFields map[string]interface{}, e
 // data contains the BSON encoded rappresentation of the data
 // ptrStruct contains a reflect.Value pointer to the struct
 // extraFieldsPtr is the pointer to the extraFields map
-func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[string]interface{}) error {
+func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[string]interface{}, extraFieldsName string) error {
 	// initialize the map that contains the extra fields
 	*extraFieldsPtr = make(map[string]interface{})
 
@@ -68,11 +74,28 @@ func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 		return err
 	}
 
+	// create a map of every struct fields
+	structFields := make(map[string]reflect.Value)
+
+	typ := reflect.Indirect(ptrStruct).Type()
+	for i := 0; i < typ.NumField(); i++ {
+		fi := typ.Field(i)
+
+		if fi.Name != extraFieldsName {
+			val, ok := fi.Tag.Lookup("bson")
+			if ok {
+				structFields[val] = ptrStruct.Elem().Field(i)
+			} else {
+				structFields[fi.Name] = ptrStruct.Elem().Field(i)
+			}
+		}
+	}
+
 	var othersList bson.D = []primitive.E{}
 
 	// for each key/value pair set it to a field of struct or add it to othersList
 	for k, v := range document {
-		field := ptrStruct.Elem().FieldByName(k)
+		field := structFields[k]
 
 		if field.IsValid() {
 			// the field k is part of the struct, so the value will be set inside
