@@ -19,6 +19,8 @@ package godynstruct
 
 import (
 	"reflect"
+	"sort"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -42,19 +44,28 @@ func DynMarshalBSON(_struct reflect.Value, extraFields map[string]interface{}, e
 		fi := typ.Field(i)
 
 		if fi.Name != extraFieldsName {
-			val, ok := fi.Tag.Lookup("bson")
-			if ok {
-				out = append(out, bson.E{Key: val, Value: _struct.Field(i).Interface()})
-			} else {
-				out = append(out, bson.E{Key: fi.Name, Value: _struct.Field(i).Interface()})
+			val, _ := fi.Tag.Lookup("bson")
+			fi, err := buildFieldInfo(fi.Name, _struct.Field(i), val)
+			if err != nil {
+				return nil, err
+			}
+
+			if !fi.omitted && (!fi.omitEmpty || !fi.fieldValue.IsZero()) {
+				out = append(out, bson.E{Key: fi.actualFieldName, Value: fi.fieldValue.Interface()})
 			}
 		}
 	}
 
 	// add the missing extra fields
+	tempList := make(bson.D, 0)
 	for v, k := range extraFields {
-		out = append(out, bson.E{Key: v, Value: k})
+		tempList = append(tempList, bson.E{Key: v, Value: k})
 	}
+	sort.Slice(tempList, func(i, j int) bool {
+		return strings.Compare(tempList[i].Key, tempList[j].Key) < 0
+	})
+
+	out = append(out, tempList...)
 
 	return bson.Marshal(out)
 }
@@ -75,19 +86,20 @@ func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 	}
 
 	// create a map of every struct fields
-	structFields := make(map[string]reflect.Value)
+	structFields := make(map[string]fieldInfo)
 
 	typ := reflect.Indirect(ptrStruct).Type()
 	for i := 0; i < typ.NumField(); i++ {
 		fi := typ.Field(i)
 
 		if fi.Name != extraFieldsName {
-			val, ok := fi.Tag.Lookup("bson")
-			if ok {
-				structFields[val] = ptrStruct.Elem().Field(i)
-			} else {
-				structFields[fi.Name] = ptrStruct.Elem().Field(i)
+			val, _ := fi.Tag.Lookup("bson")
+			info, err := buildFieldInfo(fi.Name, ptrStruct.Elem().Field(i), val)
+			if err != nil {
+				return err
 			}
+
+			structFields[info.actualFieldName] = info
 		}
 	}
 
@@ -97,15 +109,17 @@ func DynUnmarshalBSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 	for k, v := range document {
 		field := structFields[k]
 
-		if field.IsValid() {
-			// the field k is part of the struct, so the value will be set inside
-			if v.Type == bson.TypeNull && field.Type().Kind() == reflect.Ptr && field.Type().Elem().Kind() == reflect.Struct {
-				nilValue := reflect.Zero(field.Type())
-				field.Set(nilValue)
-			} else {
-				err = v.Unmarshal(field.Addr().Interface())
-				if err != nil {
-					return err
+		if field.fieldValue.IsValid() {
+			if !field.omitted {
+				// the field k is part of the struct, so the value will be set inside
+				if v.Type == bson.TypeNull && field.fieldValue.Type().Kind() == reflect.Ptr && field.fieldValue.Type().Elem().Kind() == reflect.Struct {
+					nilValue := reflect.Zero(field.fieldValue.Type())
+					field.fieldValue.Set(nilValue)
+				} else {
+					err = v.Unmarshal(field.fieldValue.Addr().Interface())
+					if err != nil {
+						return err
+					}
 				}
 			}
 		} else {

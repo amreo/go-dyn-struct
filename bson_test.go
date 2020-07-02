@@ -42,6 +42,14 @@ func (p *FavoriteOperatingSystem) UnmarshalBSON(data []byte) error {
 	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
 }
 
+func (p FooTagsTest) MarshalBSON() ([]byte, error) {
+	return DynMarshalBSON(reflect.ValueOf(p), p._otherInfo, "_otherInfo")
+}
+
+func (p *FooTagsTest) UnmarshalBSON(data []byte) error {
+	return DynUnmarshalBSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
+}
+
 func TestDynMarshalBSON(t *testing.T) {
 	p1 := Person{
 		ID:            "foobar",
@@ -140,6 +148,68 @@ func TestDynUnmarshalBSON(t *testing.T) {
 	require.NoError(t, err)
 
 	var out Person
+	require.NoError(t, bson.Unmarshal(raw, &out))
+
+	assert.Equal(t, expected, out)
+}
+
+func TestDynMarshalBSONWithTags(t *testing.T) {
+	p1 := FooTagsTest{
+		Normal:            4,
+		Hidden:            10,
+		OnlyOmitEmtpy:     nil,
+		OnlyOmitEmtpy2:    ptrStr("Pippo"),
+		Renamed:           "Pluto",
+		RenamedOmitEmpty:  nil,
+		RenamedOmitEmpty2: ptrBool(true),
+		_otherInfo: map[string]interface{}{
+			"OK": true,
+		},
+	}
+
+	p2 := bson.D{
+		bson.E{Key: "Normal", Value: uint(4)},
+		bson.E{Key: "Bar", Value: "Pluto"},
+		bson.E{Key: "ROE2", Value: true},
+		bson.E{Key: "OnlyOmitEmtpy2", Value: "Pippo"},
+		bson.E{Key: "OK", Value: true},
+	}
+
+	raw1, err := bson.Marshal(p1)
+	require.NoError(t, err)
+
+	raw2, err := bson.Marshal(p2)
+	require.NoError(t, err)
+
+	assert.Equal(t, raw1, raw2)
+}
+
+func TestDynUnmarshalBSONWithTags(t *testing.T) {
+	p := bson.D{
+		bson.E{Key: "Normal", Value: uint(4)},
+		bson.E{Key: "Bar", Value: "Pluto"},
+		bson.E{Key: "ROE2", Value: true},
+		bson.E{Key: "OnlyOmitEmtpy2", Value: "Pippo"},
+		bson.E{Key: "OK", Value: true},
+	}
+
+	expected := FooTagsTest{
+		Normal:            4,
+		Hidden:            0,
+		OnlyOmitEmtpy:     nil,
+		OnlyOmitEmtpy2:    ptrStr("Pippo"),
+		Renamed:           "Pluto",
+		RenamedOmitEmpty:  nil,
+		RenamedOmitEmpty2: ptrBool(true),
+		_otherInfo: map[string]interface{}{
+			"OK": true,
+		},
+	}
+
+	raw, err := bson.Marshal(p)
+	require.NoError(t, err)
+
+	var out FooTagsTest
 	require.NoError(t, bson.Unmarshal(raw, &out))
 
 	assert.Equal(t, expected, out)

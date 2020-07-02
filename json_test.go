@@ -42,6 +42,14 @@ func (p *FavoriteOperatingSystem) UnmarshalJSON(data []byte) error {
 	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
 }
 
+func (p FooTagsTest) MarshalJSON() ([]byte, error) {
+	return DynMarshalJSON(reflect.ValueOf(p), p._otherInfo, "_otherInfo")
+}
+
+func (p *FooTagsTest) UnmarshalJSON(data []byte) error {
+	return DynUnmarshalJSON(data, reflect.ValueOf(p), &p._otherInfo, "_otherInfo")
+}
+
 func TestDynMarshalJSON(t *testing.T) {
 	p := Person{
 		ID:            "foobar",
@@ -80,6 +88,36 @@ func TestDynMarshalJSON(t *testing.T) {
 			"OptionalTitle": null,
 			"Profession": "Gamer",
 			"Really": true
+		}
+	`
+
+	raw, err := json.Marshal(p)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, expected, string(raw))
+}
+
+func TestDynMarshalJSONWithTags(t *testing.T) {
+	p := FooTagsTest{
+		Normal:            4,
+		Hidden:            10,
+		OnlyOmitEmtpy:     nil,
+		OnlyOmitEmtpy2:    ptrStr("Pippo"),
+		Renamed:           "Pluto",
+		RenamedOmitEmpty:  nil,
+		RenamedOmitEmpty2: ptrBool(true),
+		_otherInfo: map[string]interface{}{
+			"OK": true,
+		},
+	}
+
+	expected := `
+		{
+			"Normal": 4,
+			"Bar": "Pluto",
+			"OnlyOmitEmtpy2": "Pippo",
+			"ROE2": true,
+			"OK": true
 		}
 	`
 
@@ -132,6 +170,36 @@ func TestDynUnmarshalJSON(t *testing.T) {
 	`
 
 	var out Person
+	require.NoError(t, json.Unmarshal([]byte(p), &out))
+
+	assert.Equal(t, expected, out)
+}
+
+func TestDynUnmarshalJSONWithTags(t *testing.T) {
+	expected := FooTagsTest{
+		Normal:            4,
+		Hidden:            0,
+		OnlyOmitEmtpy:     nil,
+		OnlyOmitEmtpy2:    ptrStr("Pippo"),
+		Renamed:           "Pluto",
+		RenamedOmitEmpty:  nil,
+		RenamedOmitEmpty2: ptrBool(true),
+		_otherInfo: map[string]interface{}{
+			"OK": true,
+		},
+	}
+
+	p := `
+		{
+			"Normal": 4,
+			"Bar": "Pluto",
+			"OnlyOmitEmtpy2": "Pippo",
+			"ROE2": true,
+			"OK": true
+		}
+	`
+
+	var out FooTagsTest
 	require.NoError(t, json.Unmarshal([]byte(p), &out))
 
 	assert.Equal(t, expected, out)

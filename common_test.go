@@ -17,6 +17,13 @@
 
 package godynstruct
 
+import (
+	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
 type Person struct {
 	ID                          string `bson:"FooID" json:"BarID"`
 	Name                        string
@@ -34,4 +41,73 @@ type FavoriteOperatingSystem struct {
 	Since int
 
 	_otherInfo map[string]interface{}
+}
+
+type FooTagsTest struct {
+	Normal            uint
+	Renamed           string  `json:"Bar" bson:"Bar"`
+	Hidden            int     `json:"-" bson:"-"`
+	RenamedOmitEmpty  *bool   `json:"ROE,omitempty" bson:"ROE,omitempty"`
+	OnlyOmitEmtpy     *string `json:",omitempty" bson:",omitempty"`
+	RenamedOmitEmpty2 *bool   `json:"ROE2,omitempty" bson:"ROE2,omitempty"`
+	OnlyOmitEmtpy2    *string `json:",omitempty" bson:",omitempty"`
+	_otherInfo        map[string]interface{}
+}
+
+func ptrStr(str string) *string {
+	return &str
+}
+
+func ptrBool(val bool) *bool {
+	return &val
+}
+
+func TestBuildFieldInfo(t *testing.T) {
+	var ftt FooTagsTest
+	fttValue := reflect.ValueOf(ftt)
+
+	outInfo, err := buildFieldInfo("Normal", fttValue, "")
+	assert.NoError(t, err)
+	assert.Equal(t, fieldInfo{
+		actualFieldName: "Normal",
+		fieldValue:      fttValue,
+		omitted:         false,
+		omitEmpty:       false,
+	}, outInfo)
+
+	outInfo, err = buildFieldInfo("Renamed", fttValue, "Bar")
+	assert.NoError(t, err)
+	assert.Equal(t, fieldInfo{
+		actualFieldName: "Bar",
+		fieldValue:      fttValue,
+		omitted:         false,
+		omitEmpty:       false,
+	}, outInfo)
+
+	outInfo, err = buildFieldInfo("Hidden", fttValue, "-")
+	assert.NoError(t, err)
+	assert.Equal(t, fieldInfo{
+		actualFieldName: "",
+		fieldValue:      fttValue,
+		omitted:         true,
+		omitEmpty:       false,
+	}, outInfo)
+
+	outInfo, err = buildFieldInfo("RenamedOmitEmpty", fttValue, "ROE,omitempty")
+	assert.NoError(t, err)
+	assert.Equal(t, fieldInfo{
+		actualFieldName: "ROE",
+		fieldValue:      fttValue,
+		omitted:         false,
+		omitEmpty:       true,
+	}, outInfo)
+
+	outInfo, err = buildFieldInfo("OnlyOmitEmtpy", fttValue, ",omitempty")
+	assert.NoError(t, err)
+	assert.Equal(t, fieldInfo{
+		actualFieldName: "OnlyOmitEmtpy",
+		fieldValue:      fttValue,
+		omitted:         false,
+		omitEmpty:       true,
+	}, outInfo)
 }

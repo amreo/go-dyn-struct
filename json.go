@@ -40,11 +40,14 @@ func DynMarshalJSON(_struct reflect.Value, extraFields map[string]interface{}, e
 		fi := typ.Field(i)
 
 		if fi.Name != extraFieldsName {
-			val, ok := fi.Tag.Lookup("json")
-			if ok {
-				out[val] = _struct.Field(i).Interface()
-			} else {
-				out[fi.Name] = _struct.Field(i).Interface()
+			val, _ := fi.Tag.Lookup("json")
+			fi, err := buildFieldInfo(fi.Name, _struct.Field(i), val)
+			if err != nil {
+				return nil, err
+			}
+
+			if !fi.omitted && (!fi.omitEmpty || !fi.fieldValue.IsZero()) {
+				out[fi.actualFieldName] = fi.fieldValue.Interface()
 			}
 		}
 	}
@@ -73,19 +76,20 @@ func DynUnmarshalJSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 	}
 
 	// create a map of every struct fields
-	structFields := make(map[string]reflect.Value)
+	structFields := make(map[string]fieldInfo)
 
 	typ := reflect.Indirect(ptrStruct).Type()
 	for i := 0; i < typ.NumField(); i++ {
 		fi := typ.Field(i)
 
 		if fi.Name != extraFieldsName {
-			val, ok := fi.Tag.Lookup("json")
-			if ok {
-				structFields[val] = ptrStruct.Elem().Field(i)
-			} else {
-				structFields[fi.Name] = ptrStruct.Elem().Field(i)
+			val, _ := fi.Tag.Lookup("json")
+			info, err := buildFieldInfo(fi.Name, ptrStruct.Elem().Field(i), val)
+			if err != nil {
+				return err
 			}
+
+			structFields[info.actualFieldName] = info
 		}
 	}
 
@@ -93,11 +97,13 @@ func DynUnmarshalJSON(data []byte, ptrStruct reflect.Value, extraFieldsPtr *map[
 	for k, v := range objmap {
 		field := structFields[k]
 
-		if field.IsValid() {
-			// the field k is part of the struct, so the value will be set inside
-			err = json.Unmarshal(objmap[k], field.Addr().Interface())
-			if err != nil {
-				return err
+		if field.fieldValue.IsValid() {
+			if !field.omitted {
+				// the field k is part of the struct, so the value will be set inside
+				err = json.Unmarshal(objmap[k], field.fieldValue.Addr().Interface())
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			// the field k is not part of the struct, so the kv will be added to extraFields
